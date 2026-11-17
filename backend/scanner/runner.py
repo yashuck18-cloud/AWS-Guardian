@@ -433,6 +433,15 @@ def generate_demo_resources(account):
             }
         }
     ]
+    if acc_id and acc_id != '713863946092':
+        import re
+        for item in demo_data:
+            meta = item.get('metadata', {})
+            if 'iam_instance_profile' in meta and 'arn:aws:iam::' in str(meta['iam_instance_profile']):
+                meta['iam_instance_profile'] = re.sub(r'arn:aws:iam::\d{12}:', f'arn:aws:iam::{acc_id}:', meta['iam_instance_profile'])
+            if 'kms_key_id' in meta and 'arn:aws:kms:' in str(meta['kms_key_id']):
+                meta['kms_key_id'] = re.sub(r':\d{12}:', f':{acc_id}:', meta['kms_key_id'])
+
     if account and account.enabled_regions:
         regs = [r.lower() for r in account.enabled_regions]
         if 'all' not in regs:

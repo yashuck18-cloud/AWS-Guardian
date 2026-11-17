@@ -16,18 +16,20 @@ class ResourceListView(generics.ListAPIView):
         # Strict tenant isolation with preloaded account foreign key
         queryset = Resource.objects.filter(account__user=self.request.user).select_related('account')
 
-        # Filters
+        # Filters - Strict per-account isolation so resources never bleed across accounts
         account_param = self.request.query_params.get('account')
+        target_account = None
+        from aws_accounts.models import AWSAccount
         if account_param:
-            from aws_accounts.models import AWSAccount
             if is_valid_uuid(account_param):
-                acc_exists = AWSAccount.objects.filter(id=account_param, user=self.request.user).exists()
-                if acc_exists:
-                    queryset = queryset.filter(account__id=account_param)
+                target_account = AWSAccount.objects.filter(id=account_param, user=self.request.user).first()
             else:
-                acc_exists = AWSAccount.objects.filter(account_id=account_param, user=self.request.user).exists()
-                if acc_exists:
-                    queryset = queryset.filter(account__account_id=account_param)
+                target_account = AWSAccount.objects.filter(account_id=account_param, user=self.request.user).first()
+        else:
+            target_account = AWSAccount.objects.filter(user=self.request.user, status='CONNECTED').first() or AWSAccount.objects.filter(user=self.request.user).first()
+
+        if target_account:
+            queryset = queryset.filter(account=target_account)
 
         service = self.request.query_params.get('service')
         if service and service.upper() != 'ALL':
