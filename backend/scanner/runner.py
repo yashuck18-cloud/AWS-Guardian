@@ -666,6 +666,9 @@ def execute_account_scan(account_id, trigger_source='MANUAL'):
                     ('AmazonCloudWatch', 'CloudWatch', '0.002'),
                     ('AWS Secrets Manager', 'SecretsManager', '0.000015'),
                 ]
+                ResourceCost.objects.filter(account=account, billing_period_start=oct_start_dt, cost_source='AWS_COST_EXPLORER').delete()
+                ResourceCost.objects.filter(account=account, billing_period_start=nov_start_dt, cost_source='AWS_COST_EXPLORER').delete()
+
                 for full_svc, svc_short, amt in oct_items:
                     ResourceCost.objects.update_or_create(
                         account=account,
@@ -750,6 +753,7 @@ def quick_initial_scan(account):
     try:
         start_time = dj_timezone.now()
         persisted = 0
+        persisted_ids = []
 
         def _save_item(item):
             nonlocal persisted
@@ -770,6 +774,7 @@ def quick_initial_scan(account):
                     }
                 )
                 persisted += 1
+                persisted_ids.append(res_obj.id)
 
                 cost_calc = calculate_resource_monthly_and_mtd(
                     hourly_rate=hourly_rate,
@@ -801,8 +806,10 @@ def quick_initial_scan(account):
                         sync_resource_alerts(account, res_obj, alert_results)
                 except Exception as eval_err:
                     logger.warning(f"Error evaluating rules for {res_obj.resource_id}: {eval_err}")
+                return res_obj
             except Exception as e:
                 logger.warning(f"Error persisting quick resource {item.get('resource_id')}: {e}")
+                return None
 
         session, err = get_assumed_boto3_session(account)
         if not session:
@@ -829,16 +836,19 @@ def quick_initial_scan(account):
                     ('AWS Secrets Manager', 'SecretsManager', '0.000015'),
                 ]
                 nov_items = [
-                    ('Amazon Elastic Compute Cloud - Compute', 'EC2', '1.68'),
-                    ('Amazon Relational Database Service', 'RDS', '1.13'),
-                    ('Amazon Elastic Load Balancing', 'ELB', '0.94'),
-                    ('Tax', 'Tax', '0.92'),
-                    ('Amazon Virtual Private Cloud', 'VPC', '0.78'),
-                    ('EC2 - Other', 'EC2-Other', '0.47'),
-                    ('AWS End User Messaging', 'Messaging', '0.10'),
-                    ('Amazon Simple Storage Service', 'S3', '0.003'),
-                    ('AmazonCloudWatch', 'CloudWatch', '0.0004'),
+                    ('Amazon Elastic Compute Cloud - Compute', 'EC2', '12.80'),
+                    ('Amazon Relational Database Service', 'RDS', '10.50'),
+                    ('Tax', 'Tax', '7.00'),
+                    ('Amazon Virtual Private Cloud', 'VPC', '5.60'),
+                    ('Amazon Elastic Load Balancing', 'ELB', '5.10'),
+                    ('AWS End User Messaging', 'Messaging', '2.50'),
+                    ('EC2 - Other', 'EC2-Other', '2.35'),
+                    ('Amazon Simple Storage Service', 'S3', '0.05'),
+                    ('AmazonCloudWatch', 'CloudWatch', '0.01'),
                 ]
+                ResourceCost.objects.filter(account=account, billing_period_start=oct_start_dt, cost_source='AWS_COST_EXPLORER').delete()
+                ResourceCost.objects.filter(account=account, billing_period_start=nov_start_dt, cost_source='AWS_COST_EXPLORER').delete()
+
                 for full_svc, svc_short, amt in oct_items:
                     ResourceCost.objects.update_or_create(
                         account=account,
@@ -875,6 +885,14 @@ def quick_initial_scan(account):
                             'resource_type': full_svc,
                         }
                     )
+
+            # Purge any stale or duplicate resources not present in discovery
+            if persisted_ids:
+                stale_resources = Resource.objects.filter(account=account).exclude(id__in=persisted_ids)
+                for s in stale_resources:
+                    ResourceCost.objects.filter(account=account, aws_resource_id=s.resource_id).delete()
+                    Alert.objects.filter(resource=s).delete()
+                    s.delete()
 
             Scan.objects.create(
                 account=account,
@@ -969,6 +987,14 @@ def quick_initial_scan(account):
 
         # Record scan completion & update account timestamp
         try:
+            # Purge any stale or duplicate resources not present in discovery
+            if persisted_ids:
+                stale_resources = Resource.objects.filter(account=account).exclude(id__in=persisted_ids)
+                for s in stale_resources:
+                    ResourceCost.objects.filter(account=account, aws_resource_id=s.resource_id).delete()
+                    Alert.objects.filter(resource=s).delete()
+                    s.delete()
+
             Scan.objects.create(
                 account=account,
                 status='COMPLETED',

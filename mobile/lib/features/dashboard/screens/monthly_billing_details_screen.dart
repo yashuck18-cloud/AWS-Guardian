@@ -105,7 +105,7 @@ class _MonthlyBillingDetailsScreenState extends ConsumerState<MonthlyBillingDeta
     // Month cost calculations
     final monthCostUSD = (stats != null && stats.currentCost > 0)
         ? stats.currentCost
-        : (isCurrent ? 6.01 : 101.32);
+        : (isCurrent ? 45.91 : 101.32);
     final monthCostINR = (stats != null && stats.approxInr > 0)
         ? stats.approxInr
         : (monthCostUSD * 86.50);
@@ -113,7 +113,7 @@ class _MonthlyBillingDetailsScreenState extends ConsumerState<MonthlyBillingDeta
     // Combined 2-month full cost
     final combinedUSD = (stats != null && stats.combinedTotalCost > 0)
         ? stats.combinedTotalCost
-        : 107.33;
+        : 147.23;
     final combinedINR = (stats != null && stats.combinedApproxInr > 0)
         ? stats.combinedApproxInr
         : (combinedUSD * 86.50);

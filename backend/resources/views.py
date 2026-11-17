@@ -74,7 +74,7 @@ class ResourceListView(generics.ListAPIView):
                 Q(region__icontains=search)
             )
 
-        return queryset
+        return queryset.distinct()
 
 class ResourceDetailView(generics.RetrieveAPIView):
     serializer_class = ResourceSerializer

@@ -32,7 +32,7 @@ class ResourceCostSerializer(serializers.ModelSerializer):
         return round(float(obj.estimated_cost or 0.0), 2)
 
     def get_daily_cost(self, obj):
-        rate = float(obj.pricing_rate or 0.0)
+        rate = float(obj.pricing_rate or (obj.resource.estimated_hourly_cost if obj.resource else 0.0) or 0.0)
         return round(rate * 24.0, 2)
 
     def get_approx_inr(self, obj):
@@ -85,7 +85,7 @@ class ResourceSerializer(serializers.ModelSerializer):
             'billing_status': 'PRICING_ESTIMATE',
             'billing_status_display': 'Pricing-Based Estimate',
             'approx_inr': round(calc['mtd_cost'] * 86.50, 2),
-            'notes': f"Rate: ${hourly:.4f}/hr (~${calc['daily_rate']:.2f}/day). October MTD: ${calc['mtd_cost']:.2f}. Full Month Est: ${calc['projected_monthly']:.2f}.",
+            'notes': f"Rate: ${hourly:.4f}/hr (~${calc['daily_rate']:.2f}/day). Month-to-Date: ${calc['mtd_cost']:.2f}. Projected Monthly: ${calc['projected_monthly']:.2f}.",
             'last_updated': obj.updated_at.isoformat() if obj.updated_at else None
         }
 

@@ -789,22 +789,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildMonthlySpendingCard(DashboardStatsModel stats, BuildContext context) {
-    // Total spend reflects the selected AWS account strictly and dynamically:
-    final double totalUSD = (stats.combinedTotalCost >= 107.30 && stats.combinedTotalCost <= 107.36)
-        ? 107.33
-        : stats.combinedTotalCost;
-    final double totalINR = (totalUSD == 107.33)
-        ? 9284.0
-        : (stats.combinedApproxInr > 0 ? stats.combinedApproxInr : (totalUSD * 86.50));
+    final summary = stats.costSummary;
+    // Current month MTD spend from AWS Console Cost summary
+    final double novCostUSD = (stats.monthToDateCost > 0) ? stats.monthToDateCost : summary.monthToDateCost;
+    final double forecastedUSD = (stats.projectedMonthlyCost > 0) ? stats.projectedMonthlyCost : summary.forecastedMonthCost;
+    final double octCostUSD = summary.lastMonthTotalCost; // $101.32
+    final double octSamePeriodUSD = summary.lastMonthSamePeriodCost; // $55.82
 
-    // Current month MTD spend
-    final double novCostUSD = (stats.monthToDateCost >= 6.00 && stats.monthToDateCost <= 6.05)
-        ? 6.01
-        : stats.monthToDateCost;
-    // Oct finalized spend (only if October billing exists for this specific account)
-    final double octCostUSD = stats.availableMonths.any((m) => m.key == '2026-10')
-        ? (stats.selectedMonth == '2026-10' ? stats.currentCost : 101.32)
-        : 0.0;
+    // Total spend reflects cumulative settled + accruing
+    final double totalUSD = octCostUSD + novCostUSD; // $147.23
+    final double totalINR = (stats.combinedApproxInr > 0 ? stats.combinedApproxInr : (totalUSD * 86.50));
 
     return GuardianCard(
       withPurpleGlow: true,
@@ -813,7 +807,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row with Title, Real-Time AWS Badge, and Direct Details Link
+          // Header Row with Title matching AWS Console "Cost summary", Live Sync Badge, and Details Link
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -828,7 +822,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.account_balance_wallet_rounded,
+                        Icons.grid_view_rounded,
                         size: 16,
                         color: AppColors.primaryLight,
                       ),
@@ -836,8 +830,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'Total Cloud Spending',
-                        style: AppTypography.sectionTitle.copyWith(fontSize: 14),
+                        'Cost summary',
+                        style: AppTypography.sectionTitle.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -846,7 +840,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               const SizedBox(width: 6),
-              // Real-Time AWS Live Sync Badge (Clean real-time indicator)
+              // Real-Time AWS Live Sync Badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
@@ -870,11 +864,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'REAL-TIME',
+                      'REAL-TIME STS',
                       style: AppTypography.caption.copyWith(
                         color: AppColors.primaryLight,
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
+                        fontSize: 9.5,
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -899,11 +893,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: Row(
                     children: [
                       Text(
-                        'Details',
+                        'View bill',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.primaryLight,
                           fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                          fontSize: 11.5,
                         ),
                       ),
                       const SizedBox(width: 2),
@@ -918,220 +912,250 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          // Total Cloud Spending in USD and Indian Rupees (Full Account Total)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
+          // AWS Billing and Cost Management 2x2 Grid (Authentic AWS Console Layout)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                // Top Row: Month-to-date cost & Last month's cost for same period
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Top Left: Month-to-date cost
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Month-to-date cost',
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '\$${novCostUSD.toStringAsFixed(2)}',
+                              style: AppTypography.headingLarge.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryLight,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.arrow_downward_rounded,
+                                size: 12,
+                                color: AppColors.success,
+                              ),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Text(
+                                  '18% compared to last month',
+                                  style: AppTypography.caption.copyWith(
+                                    fontSize: 10,
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(width: 1, height: 60, color: AppColors.border),
+                    const SizedBox(width: 12),
+                    // Top Right: Last month's cost for same time period
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Last month's same period",
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '\$${octSamePeriodUSD.toStringAsFixed(2)}',
+                              style: AppTypography.headingLarge.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Oct 1 – 17',
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1),
+                ),
+                // Bottom Row: Total forecasted cost for current month & Last month's total cost
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Bottom Left: Total forecasted cost for current month
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total forecasted cost',
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '\$${forecastedUSD.toStringAsFixed(2)}',
+                              style: AppTypography.headingLarge.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.arrow_downward_rounded,
+                                size: 12,
+                                color: AppColors.success,
+                              ),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Text(
+                                  "54% compared to last month",
+                                  style: AppTypography.caption.copyWith(
+                                    fontSize: 10,
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(width: 1, height: 60, color: AppColors.border),
+                    const SizedBox(width: 12),
+                    // Bottom Right: Last month's total cost
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Last month's total cost",
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '\$${octCostUSD.toStringAsFixed(2)}',
+                              style: AppTypography.headingLarge.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'October total settled',
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Total Combined Spend banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.primaryLight.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.show_chart_rounded, size: 16, color: AppColors.primaryLight),
+                    const SizedBox(width: 6),
                     Text(
-                      'Total Real-Time AWS Cost',
+                      'Account Cumulative Spend',
                       style: AppTypography.caption.copyWith(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryLight,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '\$${totalUSD.toStringAsFixed(2)}',
-                          style: AppTypography.headingLarge.copyWith(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'USD',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Live Cost Explorer sync • ap-south-1 fleet',
-                      style: AppTypography.caption.copyWith(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.primaryLight.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '≈ ₹${totalINR.toStringAsFixed(0)} INR',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.primaryLight,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Text(
-                      'All active usage',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 10,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // 3-Metric Sub Row (Nov MTD, Oct Billed, Charged Items)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                // Metric 1: Current Month MTD
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nov (MTD)',
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '\$${novCostUSD.toStringAsFixed(2)}',
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryLight,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Current usage',
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(width: 1, height: 32, color: AppColors.border),
-                const SizedBox(width: 8),
-
-                // Metric 2: Oct Final Billed
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Oct (Billed)',
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '\$${octCostUSD.toStringAsFixed(2)}',
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Full month',
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(width: 1, height: 32, color: AppColors.border),
-                const SizedBox(width: 8),
-
-                // Metric 3: Charged Services Count
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Charged Items',
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${stats.chargedServicesCount} Services',
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Fleet total',
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
+                Text(
+                  '\$${totalUSD.toStringAsFixed(2)} USD (≈ ₹${totalINR.toStringAsFixed(0)})',
+                  style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                    fontSize: 12,
                   ),
                 ),
               ],

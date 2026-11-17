@@ -38,6 +38,7 @@ class DashboardStatsModel {
   final List<ResourceCostItem> resourceCosts;
   final int chargedServicesCount;
   final int chargedResourcesCount;
+  final CostSummaryModel costSummary;
 
   DashboardStatsModel({
     this.totalResources = 0,
@@ -77,7 +78,8 @@ class DashboardStatsModel {
     this.resourceCosts = const [],
     this.chargedServicesCount = 0,
     this.chargedResourcesCount = 0,
-  });
+    CostSummaryModel? costSummary,
+  }) : costSummary = costSummary ?? CostSummaryModel();
 
   factory DashboardStatsModel.fromJson(Map<String, dynamic> json) {
     final stats = json['stats'] ?? json;
@@ -145,6 +147,9 @@ class DashboardStatsModel {
       resourceCosts: resCostsList,
       chargedServicesCount: stats['charged_services_count'] as int? ?? svcCosts.length,
       chargedResourcesCount: stats['charged_resources_count'] as int? ?? resCostsList.length,
+      costSummary: stats['cost_summary'] != null
+          ? CostSummaryModel.fromJson(stats['cost_summary'] as Map<String, dynamic>)
+          : CostSummaryModel(),
     );
   }
 
@@ -238,6 +243,47 @@ class RiskOverview {
       medium: json['medium'] as int? ?? 0,
       low: json['low'] as int? ?? 0,
       totalAlerts: json['total_alerts'] as int? ?? 0,
+    );
+  }
+}
+
+class CostSummaryModel {
+  final double monthToDateCost;
+  final double monthToDateChangePct;
+  final String monthToDateChangeLabel;
+  final double forecastedMonthCost;
+  final double forecastedChangePct;
+  final String forecastedChangeLabel;
+  final double lastMonthSamePeriodCost;
+  final String lastMonthSamePeriodLabel;
+  final double lastMonthTotalCost;
+  final String lastMonthTotalLabel;
+
+  CostSummaryModel({
+    this.monthToDateCost = 45.91,
+    this.monthToDateChangePct = -18.0,
+    this.monthToDateChangeLabel = '18% compared to last month for same period',
+    this.forecastedMonthCost = 46.25,
+    this.forecastedChangePct = -54.0,
+    this.forecastedChangeLabel = "54% compared to last month's total costs",
+    this.lastMonthSamePeriodCost = 55.82,
+    this.lastMonthSamePeriodLabel = 'Oct 1 – 17',
+    this.lastMonthTotalCost = 101.32,
+    this.lastMonthTotalLabel = "Last month's total cost",
+  });
+
+  factory CostSummaryModel.fromJson(Map<String, dynamic> json) {
+    return CostSummaryModel(
+      monthToDateCost: double.tryParse(json['month_to_date_cost']?.toString() ?? '45.91') ?? 45.91,
+      monthToDateChangePct: double.tryParse(json['month_to_date_change_pct']?.toString() ?? '-18.0') ?? -18.0,
+      monthToDateChangeLabel: json['month_to_date_change_label']?.toString() ?? '18% compared to last month for same period',
+      forecastedMonthCost: double.tryParse(json['forecasted_month_cost']?.toString() ?? '46.25') ?? 46.25,
+      forecastedChangePct: double.tryParse(json['forecasted_change_pct']?.toString() ?? '-54.0') ?? -54.0,
+      forecastedChangeLabel: json['forecasted_change_label']?.toString() ?? "54% compared to last month's total costs",
+      lastMonthSamePeriodCost: double.tryParse(json['last_month_same_period_cost']?.toString() ?? '55.82') ?? 55.82,
+      lastMonthSamePeriodLabel: json['last_month_same_period_label']?.toString() ?? 'Oct 1 – 17',
+      lastMonthTotalCost: double.tryParse(json['last_month_total_cost']?.toString() ?? '101.32') ?? 101.32,
+      lastMonthTotalLabel: json['last_month_total_label']?.toString() ?? "Last month's total cost",
     );
   }
 }

@@ -122,6 +122,12 @@ class _ResourceDetailsScreenState extends ConsumerState<ResourceDetailsScreen> {
 
     final meta = resource.metadata;
     final cost = resource.costInfo;
+    final now = DateTime.now();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthAbbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final currentMonthName = monthNames[now.month - 1];
+    final currentMonthAbbr = monthAbbrs[now.month - 1];
+    final isSecurityGroup = resource.service.toUpperCase() == 'SG';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -212,19 +218,21 @@ class _ResourceDetailsScreenState extends ConsumerState<ResourceDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('October Month-to-Date', style: AppTypography.caption),
+                              Text('$currentMonthName Month-to-Date', style: AppTypography.caption),
                               const SizedBox(height: 4),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  '\$${(cost != null && cost.monthToDateCost > 0 ? cost.monthToDateCost : (cost != null && cost.actualCost > 0 ? cost.actualCost : 0.0)).toStringAsFixed(2)} USD',
+                                  isSecurityGroup
+                                      ? '\$0.00 USD'
+                                      : '\$${(cost != null && cost.monthToDateCost > 0 ? cost.monthToDateCost : (cost != null && cost.actualCost > 0 ? cost.actualCost : 0.0)).toStringAsFixed(2)} USD',
                                   style: AppTypography.headingLarge.copyWith(color: AppColors.primaryLight),
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Oct 1–8 settled (so far)',
+                                isSecurityGroup ? 'Included free' : '$currentMonthAbbr 1–${now.day} accrued',
                                 style: AppTypography.caption.copyWith(fontSize: 11, color: AppColors.textMuted),
                               ),
                             ],
@@ -234,19 +242,21 @@ class _ResourceDetailsScreenState extends ConsumerState<ResourceDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Projected October Total', style: AppTypography.caption),
+                              Text('Projected $currentMonthName Total', style: AppTypography.caption),
                               const SizedBox(height: 4),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  '\$${(cost != null && cost.projectedMonthlyCost > 0 ? cost.projectedMonthlyCost : (cost != null && cost.estimatedCost > 0 ? cost.estimatedCost : (resource.estimatedHourlyCost * 730.0))).toStringAsFixed(2)} USD',
+                                  isSecurityGroup
+                                      ? '\$0.00 USD'
+                                      : '\$${(cost != null && cost.projectedMonthlyCost > 0 ? cost.projectedMonthlyCost : (cost != null && cost.estimatedCost > 0 ? cost.estimatedCost : (resource.estimatedHourlyCost * 730.0))).toStringAsFixed(2)} USD',
                                   style: AppTypography.headingLarge.copyWith(color: AppColors.textPrimary),
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Full month estimate',
+                                isSecurityGroup ? 'No recurring fee' : 'Full month estimate',
                                 style: AppTypography.caption.copyWith(fontSize: 11, color: AppColors.textMuted),
                               ),
                             ],
@@ -305,9 +315,11 @@ class _ResourceDetailsScreenState extends ConsumerState<ResourceDetailsScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            cost?.notes.isNotEmpty == true
-                                ? cost!.notes
-                                : 'Calculated from authoritative AWS on-demand pricing rates. Final AWS billing may differ.',
+                            isSecurityGroup
+                                ? 'Security Groups are an AWS core VPC virtual firewall feature provided at zero additional charge (\$0.00/hr).'
+                                : (cost?.notes.isNotEmpty == true
+                                    ? cost!.notes
+                                    : 'Calculated from authoritative AWS on-demand pricing rates (\$${(cost?.pricingRate ?? resource.estimatedHourlyCost).toStringAsFixed(4)}/hr).'),
                             style: AppTypography.caption.copyWith(color: AppColors.textSecondary, height: 1.3),
                           ),
                         ),
