@@ -43,10 +43,23 @@ def evaluate_resource_rules(resource, user_preferences=None):
     if service == 'EC2':
         launch_time_str = metadata.get('launch_time')
         launch_time = parse_iso_datetime(launch_time_str)
+        tags = metadata.get('tags') or {}
+        env_tag = str(tags.get('Environment') or tags.get('env') or '').lower()
+        inst_name = (resource.name or metadata.get('instance_name') or '').lower()
+        is_production = 'prod' in inst_name or 'production' in inst_name or env_tag in ('prod', 'production')
         
         if state == 'running' and launch_time:
             running_hours = (now - launch_time).total_seconds() / 3600.0
-            if running_hours > (ec2_threshold_hours * 7):  # Running > 7x threshold (e.g. > 1 week)
+            if is_production:
+                return RuleEvaluationResult(
+                    risk_level='NONE',
+                    risk_reason="Production instance operating within normal parameters with continuous uptime.",
+                    title="Production EC2 Instance Active",
+                    description=f"EC2 Instance '{resource.name or resource.resource_id}' is running as an active production workload.",
+                    rule_code='EC2_PRODUCTION_ACTIVE',
+                    cost_impact=0.0
+                )
+            elif running_hours > (ec2_threshold_hours * 7):  # Non-prod running > 7x threshold
                 return RuleEvaluationResult(
                     risk_level='CRITICAL',
                     risk_reason=f"Instance running continuously for {int(running_hours)} hours (exceeds {ec2_threshold_hours * 7}h threshold). May require review.",

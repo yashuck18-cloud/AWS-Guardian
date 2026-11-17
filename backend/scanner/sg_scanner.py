@@ -5,7 +5,8 @@ logger = logging.getLogger(__name__)
 
 def is_cidr_open_to_world(ip_ranges, ipv6_ranges):
     """
-    Checks if any CIDR range permits ingress from the public internet (0.0.0.0/0 or any non-private IP).
+    Checks if any CIDR range permits unrestricted ingress from the public internet (0.0.0.0/0 or ::/0).
+    A single IP (/32) or specific subnet is an authorized whitelist, NOT open to the world.
     """
     for r in ip_ranges:
         cidr = r.get('CidrIp')
@@ -15,7 +16,7 @@ def is_cidr_open_to_world(ip_ranges, ipv6_ranges):
             return True
         try:
             net = ipaddress.ip_network(cidr, strict=False)
-            if not net.is_private and not net.is_loopback and not net.is_link_local:
+            if net.prefixlen == 0:
                 return True
         except Exception:
             pass
@@ -28,7 +29,7 @@ def is_cidr_open_to_world(ip_ranges, ipv6_ranges):
             return True
         try:
             net = ipaddress.ip_network(cidr, strict=False)
-            if not net.is_private and not net.is_loopback and not net.is_link_local:
+            if net.prefixlen == 0:
                 return True
         except Exception:
             pass

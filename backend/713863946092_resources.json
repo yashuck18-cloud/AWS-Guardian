@@ -364,7 +364,7 @@
           "protocol": "tcp",
           "from_port": 22,
           "to_port": 22,
-          "is_world_open": true,
+          "is_world_open": false,
           "ip_ranges": [
             "103.87.95.42/32"
           ],
@@ -379,13 +379,11 @@
           "ipv6_ranges": []
         }
       ],
-      "has_open_ssh": true,
+      "has_open_ssh": false,
       "has_open_rdp": false,
       "has_open_all": false,
       "has_open_db": false,
-      "open_ports": [
-        "22"
-      ]
+      "open_ports": []
     }
   },
   {
@@ -490,7 +488,7 @@
           "protocol": "tcp",
           "from_port": 22,
           "to_port": 22,
-          "is_world_open": true,
+          "is_world_open": false,
           "ip_ranges": [
             "103.87.95.42/32"
           ],
@@ -505,13 +503,11 @@
           "ipv6_ranges": []
         }
       ],
-      "has_open_ssh": true,
+      "has_open_ssh": false,
       "has_open_rdp": false,
       "has_open_all": false,
       "has_open_db": false,
-      "open_ports": [
-        "22"
-      ]
+      "open_ports": []
     }
   },
   {

@@ -795,9 +795,12 @@ def quick_initial_scan(account):
                 try:
                     alert_results = evaluate_resource_rules(res_obj)
                     if alert_results:
-                        sync_resource_alerts(res_obj, alert_results)
-                except Exception:
-                    pass
+                        res_obj.risk_level = alert_results.risk_level
+                        res_obj.risk_reason = alert_results.risk_reason
+                        res_obj.save(update_fields=['risk_level', 'risk_reason'])
+                        sync_resource_alerts(account, res_obj, alert_results)
+                except Exception as eval_err:
+                    logger.warning(f"Error evaluating rules for {res_obj.resource_id}: {eval_err}")
             except Exception as e:
                 logger.warning(f"Error persisting quick resource {item.get('resource_id')}: {e}")
 
