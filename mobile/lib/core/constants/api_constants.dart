@@ -12,8 +12,8 @@ class ApiConstants {
   static const String androidEmulatorBaseUrl = 'http://10.0.2.2:8000/api';
   static const String localLanBaseUrl = 'http://10.28.71.165:8000/api';
 
-  // Default Base URL: Defaults to localHostBaseUrl (instant sub-5ms latency with adb reverse or local run)
-  static String get defaultBaseUrl => localHostBaseUrl;
+  // Default Base URL: Pointed to Production Render Cloud API
+  static String get defaultBaseUrl => renderBaseUrl;
 
   // Fallback candidate URLs probed automatically if primary is unreachable
   static const List<String> fallbackUrls = [
