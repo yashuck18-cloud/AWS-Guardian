@@ -42,16 +42,28 @@ class DashboardSummaryView(APIView):
 
             if region_param and region_param.lower() != 'all':
                 clean_region = region_param.strip().lower()
-                resources_qs = resources_qs.filter(region__iexact=clean_region)
-                alerts_qs = alerts_qs.filter(resource__region__iexact=clean_region)
-                costs_qs = costs_qs.filter(Q(region__iexact=clean_region) | Q(cost_source='AWS_COST_EXPLORER'))
+                resources_qs = resources_qs.filter(
+                    Q(region__iexact=clean_region) | Q(region__in=['global', '']) | Q(service='S3')
+                )
+                alerts_qs = alerts_qs.filter(
+                    Q(resource__region__iexact=clean_region) | Q(resource__region__in=['global', ''])
+                )
+                costs_qs = costs_qs.filter(
+                    Q(region__iexact=clean_region) | Q(region__in=['global', '']) | Q(cost_source='AWS_COST_EXPLORER')
+                )
             elif acc.enabled_regions:
                 raw_regs = acc.enabled_regions if isinstance(acc.enabled_regions, list) else [acc.enabled_regions]
                 active_regs = [r.strip().lower() for r in raw_regs if r and r.strip().lower() != 'all']
                 if active_regs:
-                    resources_qs = resources_qs.filter(region__in=active_regs)
-                    alerts_qs = alerts_qs.filter(resource__region__in=active_regs)
-                    costs_qs = costs_qs.filter(Q(region__in=active_regs) | Q(cost_source='AWS_COST_EXPLORER'))
+                    resources_qs = resources_qs.filter(
+                        Q(region__in=active_regs) | Q(region__in=['global', '']) | Q(service='S3')
+                    )
+                    alerts_qs = alerts_qs.filter(
+                        Q(resource__region__in=active_regs) | Q(resource__region__in=['global', ''])
+                    )
+                    costs_qs = costs_qs.filter(
+                        Q(region__in=active_regs) | Q(region__in=['global', '']) | Q(cost_source='AWS_COST_EXPLORER')
+                    )
 
         total_resources = resources_qs.count()
         running_resources = resources_qs.filter(state__iexact='running').count()
