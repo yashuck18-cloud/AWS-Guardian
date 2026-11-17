@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "692460592595",
+    "project_id": "aws-guardian",
+    "storage_bucket": "aws-guardian.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692460592595:android:fedf0e9b86076364d92326",
+        "android_client_info": {
+          "package_name": "com.awsguardian.app.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjaGX8iOT7QB_aIhtTA3hG8EE4z_nX-F0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

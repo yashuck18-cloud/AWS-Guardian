@@ -1,0 +1,12 @@
+.env
+*.pem
+*.key
+*service-account*.json
+firebase-admin-key.json
+firebase-adminsdk*.json
+__pycache__/
+*.py[cod]
+db.sqlite3
+staticfiles/
+venv/
+*.log

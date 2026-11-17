@@ -1,0 +1,39 @@
+databases:
+  - name: aws-guardian-db
+    databaseName: aws_guardian
+    user: guardian_user
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: aws-guardian-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --threads 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aws-guardian-db
+          property: connectionString
+      - key: CORS_ALLOW_ALL_ORIGINS
+        value: "True"
+      - key: MOCK_FCM
+        value: "True"
+      - key: MORNING_SCAN_TIME
+        value: "09:00"
+      - key: EVENING_SCAN_TIME
+        value: "18:00"
+      - key: SCAN_TIMEZONE
+        value: "Asia/Kolkata"

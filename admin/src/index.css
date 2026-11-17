@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --bg-canvas: #0B0F19;
+  --bg-sidebar: #0D121E;
+  --bg-card: rgba(21, 27, 44, 0.75);
+  --bg-card-solid: #151B2C;
+  --bg-card-elevated: rgba(27, 34, 55, 0.85);
+  --bg-card-elevated2: rgba(33, 41, 66, 0.90);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover-color: rgba(99, 102, 241, 0.4);
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-dimmed: #475569;
+  --text-heading: #FFFFFF;
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.light {
+  --bg-canvas: #F1F5F9;          /* Light Slate canvas */
+  --bg-sidebar: rgba(255, 255, 255, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-solid: #FFFFFF;
+  --bg-card-elevated: #F8FAFC;
+  --bg-card-elevated2: #E2E8F0;
+  --border-color: rgba(15, 23, 42, 0.10);
+  --border-hover-color: rgba(99, 102, 241, 0.5);
+  --text-primary: #0F172A;       /* High-contrast Slate-900 text */
+  --text-secondary: #334155;     /* Slate-700 description text */
+  --text-muted: #64748B;         /* Slate-500 caption text */
+  --text-dimmed: #94A3B8;
+  --text-heading: #0F172A;
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+  --glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover-color);
+}
+
+/* Glassmorphic Card Styling */
+.admin-card {
+  background-color: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.admin-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-highlight);
+  border-radius: 14px 14px 0 0;
+  pointer-events: none;
+}
+
+.admin-card:hover {
+  border-color: var(--border-hover-color);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+}
+
+.light .admin-card:hover {
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure text contrast in both light and dark modes */
+.light .text-white {
+  color: #0F172A !important;
+}
+
+.light .text-slate-200,
+.light .text-slate-300 {
+  color: #1E293B !important;
+}
+
+.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+.light .bg-\[\#151B2C\],
+.light .bg-\[\#0D121E\],
+.light .bg-\[\#0B0F19\] {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.light .bg-\[\#161D2F\] {
+  background-color: #F8FAFC !important;
+}

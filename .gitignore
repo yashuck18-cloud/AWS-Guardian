@@ -1,0 +1,29 @@
+# Environment and Secrets
+.env
+.env.local
+*.pem
+*.key
+*service-account*.json
+firebase-admin-key.json
+firebase-adminsdk*.json
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+backend/db.sqlite3
+backend/venv/
+venv/
+*.log
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/.packages
+
+# Node / Admin
+admin/node_modules/
+admin/dist/
